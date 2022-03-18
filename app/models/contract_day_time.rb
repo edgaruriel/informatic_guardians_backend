@@ -7,5 +7,5 @@ class ContractDayTime < ApplicationRecord
   validates :date, :start_time, :end_time, presence: true
   validates :contract_day, presence: true
   validates_date :date, on_or_before: lambda { Date.current.end_of_week + 5.weeks }
-  validates_date :date, on_or_after: lambda { Date.current.end_of_week }
+  validates_date :date, on_or_after: lambda { Date.current.next_week.beginning_of_week }
 end

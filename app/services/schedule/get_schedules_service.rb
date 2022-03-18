@@ -24,7 +24,7 @@ class Schedule::GetSchedulesService < Aldous::Service
       end
 
       Result::Success.new(schedules_array_hash: schedules)
-    rescue => exception
+    rescue Exception => e
       Result::Failure.new
     end
   end

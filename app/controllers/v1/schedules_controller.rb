@@ -1,5 +1,6 @@
 class V1::SchedulesController < ApplicationController
-  before_action :set_service_contract, :set_dates, only: [:show, :create, :update]
+  before_action :set_service_contract, only: [:show, :create, :update, :rank_dates]
+  before_action :set_dates, only: [:show, :create, :update]
 
   # GET /schedules
   def show
@@ -32,9 +33,13 @@ class V1::SchedulesController < ApplicationController
     end
   end
 
-  # DELETE /schedules/1
-  def destroy
-    @schedule.destroy
+  def rank_dates
+    result = Schedule::RankDatesAvailableService.new(@service_contract).perform
+    if result.success?
+      render json: result.rank_dates
+    else
+      render json: {message: 'Error, no se pudo obtener el rango de fechas disponible'}, status: :unprocessable_entity
+    end
   end
 
   private
