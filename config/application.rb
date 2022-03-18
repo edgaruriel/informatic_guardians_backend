@@ -29,7 +29,7 @@ module InformaticGuardiansBackend
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #
-    # config.time_zone = "Central Time (US & Canada)"
+    config.time_zone = "Mexico City"
     # config.eager_load_paths << Rails.root.join("extras")
 
     # Only loads a smaller set of middleware suitable for API only apps.
@@ -52,5 +52,13 @@ module InformaticGuardiansBackend
                                 routing_specs: false,
                                 request_specs: true
     end
+
+    config.autoload_paths += %W(
+    #{config.root}/app/services
+    )
+
+    config.eager_load_paths += %W(
+    #{config.root}/app/services
+    )
   end
 end

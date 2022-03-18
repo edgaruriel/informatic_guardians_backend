@@ -10,10 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_03_14_195533) do
+ActiveRecord::Schema.define(version: 2022_03_14_204145) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "contract_day_times", force: :cascade do |t|
+    t.date "date"
+    t.datetime "start_time"
+    t.datetime "end_time"
+    t.bigint "contract_day_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["contract_day_id"], name: "index_contract_day_times_on_contract_day_id"
+  end
 
   create_table "contract_days", force: :cascade do |t|
     t.integer "day_num"
@@ -25,11 +35,32 @@ ActiveRecord::Schema.define(version: 2022_03_14_195533) do
     t.index ["service_contract_id"], name: "index_contract_days_on_service_contract_id"
   end
 
+  create_table "employees", force: :cascade do |t|
+    t.string "name"
+    t.string "color_tag"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "schedules", force: :cascade do |t|
+    t.boolean "checked"
+    t.boolean "is_confirmed"
+    t.bigint "employee_id", null: false
+    t.bigint "contract_day_time_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["contract_day_time_id"], name: "index_schedules_on_contract_day_time_id"
+    t.index ["employee_id"], name: "index_schedules_on_employee_id"
+  end
+
   create_table "service_contracts", force: :cascade do |t|
     t.string "company_name"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
   end
 
+  add_foreign_key "contract_day_times", "contract_days"
   add_foreign_key "contract_days", "service_contracts"
+  add_foreign_key "schedules", "contract_day_times"
+  add_foreign_key "schedules", "employees"
 end
