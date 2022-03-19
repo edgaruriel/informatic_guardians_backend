@@ -51,9 +51,4 @@ class V1::SchedulesController < ApplicationController
     def set_service_contract
       @service_contract = ServiceContract.find(params[:service_contract_id])
     end
-
-    # Only allow a list of trusted parameters through.
-    def schedule_params
-      params.require(:schedule).permit(:checked, :is_confirmed, :employee_id, :contract_day_time_id)
-    end
 end

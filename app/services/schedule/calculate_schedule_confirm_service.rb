@@ -33,8 +33,6 @@ class Schedule::CalculateScheduleConfirmService < Aldous::Service
 
       Result::Success.new(schedules_array_hash: [])
     rescue Exception => e
-      test_calculate = 1
-      test2 = 1
       Result::Failure.new
     end
   end

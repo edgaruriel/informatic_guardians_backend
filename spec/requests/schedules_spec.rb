@@ -13,119 +13,187 @@ require 'rails_helper'
 # sticking to rails and rspec-rails APIs to keep things simple and stable.
 
 RSpec.describe "/schedules", type: :request do
-  # This should return the minimal set of attributes required to create a valid
-  # Schedule. As you add validations to Schedule, be sure to
-  # adjust the attributes here as well.
-  before(:each) do
 
-  end
-
-  let(:valid_attributes) {
-    skip("Add a hash of attributes valid for your model")
-  }
-
-  let(:invalid_attributes) {
-    skip("Add a hash of attributes invalid for your model")
-  }
-
-  # This should return the minimal set of values that should be in the headers
-  # in order to pass any filters (e.g. authentication) defined in
-  # SchedulesController, or in your router and rack
-  # middleware. Be sure to keep this updated too.
   let(:valid_headers) {
     {}
   }
 
-  describe "GET /index" do
-    it "renders a successful response" do
-      Schedule.create! valid_attributes
-      get schedules_url, headers: valid_headers, as: :json
-      expect(response).to be_successful
-    end
-  end
-
   describe "GET /show" do
-    it "renders a successful response" do
-      schedule = Schedule.create! valid_attributes
-      get schedule_url(schedule), as: :json
-      expect(response).to be_successful
+    it "Should return empty array schedules structure" do
+      service_contract = FactoryBot.create(:service_contract, :with_contract_days)
+      start_date = Date.current.next_week.beginning_of_week
+      end_date = Date.current.next_week.end_of_week
+
+      get v1_schedules_url(service_contract_id: service_contract.id, start_date: start_date, end_date: end_date), as: :json
+      expect(response).to have_http_status(200)
+      expect(JSON.parse(response.body)).to eq([])
+    end
+
+    it "Should return schedules structure " do
+      service_contract = FactoryBot.create(:service_contract, :complete_exercise)
+      start_date = Date.current.next_week.beginning_of_week
+      end_date = Date.current.next_week.end_of_week
+      result = Schedule::GetSchedulesService.new(service_contract, start_date, end_date).perform
+      data_expect = (result.success?)? result.schedules_array_hash : {}
+
+      get v1_schedules_url(service_contract_id: service_contract.id, start_date: start_date, end_date: end_date), as: :json
+      expect(response).to have_http_status(200)
+      expect(JSON.parse(response.body)).to eq(JSON.parse(data_expect.to_json))
     end
   end
 
   describe "POST /create" do
-    context "with valid parameters" do
-      it "creates a new Schedule" do
-        expect {
-          post schedules_url,
-               params: { schedule: valid_attributes }, headers: valid_headers, as: :json
-        }.to change(Schedule, :count).by(1)
-      end
+    it "With invalid parameters" do
+      FactoryBot.create(:employee)
+      service_contract = FactoryBot.create(:service_contract, :with_contract_days)
 
-      it "renders a JSON response with the new schedule" do
-        post schedules_url,
-             params: { schedule: valid_attributes }, headers: valid_headers, as: :json
-        expect(response).to have_http_status(:created)
-        expect(response.content_type).to match(a_string_including("application/json"))
-      end
+      start_date = Date.current.beginning_of_week
+      end_date = Date.current.end_of_week
+
+      post v1_schedules_url,
+           params: { service_contract_id: service_contract.id, start_date: start_date, end_date: end_date }, headers: valid_headers, as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
     end
 
-    context "with invalid parameters" do
-      it "does not create a new Schedule" do
-        expect {
-          post schedules_url,
-               params: { schedule: invalid_attributes }, as: :json
-        }.to change(Schedule, :count).by(0)
-      end
+    it "With valid parameters" do
+      FactoryBot.create(:employee)
+      service_contract = FactoryBot.create(:service_contract, :with_contract_days)
+      start_date = Date.current.next_week.beginning_of_week
+      end_date = Date.current.next_week.end_of_week
+      post v1_schedules_url,
+           params: { service_contract_id: service_contract.id, start_date: start_date, end_date: end_date }, headers: valid_headers, as: :json
 
-      it "renders a JSON response with errors for the new schedule" do
-        post schedules_url,
-             params: { schedule: invalid_attributes }, headers: valid_headers, as: :json
-        expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.content_type).to match(a_string_including("application/json"))
-      end
+      expect(response).to have_http_status(:created)
     end
   end
 
-  describe "PATCH /update" do
-    context "with valid parameters" do
-      let(:new_attributes) {
-        skip("Add a hash of attributes valid for your model")
-      }
+  let(:schedule_assignment) do
+    days_week = { monday: "1", tuesday: "2", wednesday: "3", thursday: "4", friday: "5", saturday: "6", sunday: "7"}
+    employee_ernesto = Employee.find_by(name: "Ernesto")
+    employee_barbara = Employee.find_by(name: "Barbara")
+    employee_banjamin = Employee.find_by(name: "Benjamin")
 
-      it "updates the requested schedule" do
-        schedule = Schedule.create! valid_attributes
-        patch schedule_url(schedule),
-              params: { schedule: new_attributes }, headers: valid_headers, as: :json
-        schedule.reload
-        skip("Add assertions for updated state")
-      end
+    set_data = Hash.new
+    set_data["#{days_week[:monday]}"] = Hash.new
+    set_data["#{days_week[:monday]}"]["#{employee_banjamin.id.to_s}"] = { all_day: true, times: [], confirm_all_day: true }
+    set_data["#{days_week[:tuesday]}"] = Hash.new
+    set_data["#{days_week[:tuesday]}"]["#{employee_ernesto.id.to_s}"] = { all_day: true, times: [], confirm_all_day: true }
+    set_data["#{days_week[:tuesday]}"]["#{employee_barbara.id.to_s}"] = { all_day: true, times: [], confirm_all_day: false }
+    set_data["#{days_week[:tuesday]}"]["#{employee_banjamin.id.to_s}"] = { all_day: true, times: [], confirm_all_day: false }
+    set_data["#{days_week[:wednesday]}"] = Hash.new
+    set_data["#{days_week[:wednesday]}"]["#{employee_barbara.id.to_s}"] = { all_day: true, times: [], confirm_all_day: false }
+    set_data["#{days_week[:wednesday]}"]["#{employee_banjamin.id.to_s}"] = { all_day: true, times: [], confirm_all_day: true }
+    set_data["#{days_week[:thursday]}"] = Hash.new
+    set_data["#{days_week[:thursday]}"]["#{employee_ernesto.id.to_s}"] = { all_day: true, times: [], confirm_all_day: true }
+    set_data["#{days_week[:thursday]}"]["#{employee_barbara.id.to_s}"] = { all_day: true, times: [], confirm_all_day: false }
+    set_data["#{days_week[:thursday]}"]["#{employee_banjamin.id.to_s}"] = { all_day: true, times: [], confirm_all_day: false }
+    set_data["#{days_week[:friday]}"] = Hash.new
+    set_data["#{days_week[:friday]}"]["#{employee_ernesto.id.to_s}"] = { all_day: true, times: [], confirm_all_day: false }
+    set_data["#{days_week[:friday]}"]["#{employee_barbara.id.to_s}"] = { all_day: true, times: [], confirm_all_day: true }
+    set_data["#{days_week[:saturday]}"] = Hash.new
+    set_data["#{days_week[:saturday]}"]["#{employee_ernesto.id.to_s}"] = {
+      all_day: false,
+      times: %w[10:00-11:00 11:00-12:00 12:00-13:00 13:00-14:00 14:00-15:00],
+      confirm_all_day: false,
+      times_confirmed_expected: %w[10:00-11:00 11:00-12:00 12:00-13:00 13:00-14:00 14:00-15:00]
+    }
+    set_data["#{days_week[:saturday]}"]["#{employee_barbara.id.to_s}"] = {
+      all_day: false,
+      times: %w[18:00-19:00 19:00-20:00 20:00-21:00],
+      confirm_all_day: false,
+      times_confirmed_expected: []
+    }
+    set_data["#{days_week[:saturday]}"]["#{employee_banjamin.id.to_s}"] = {
+      all_day: false,
+      times: %w[18:00-19:00 19:00-20:00 20:00-21:00 21:00-22:00 22:00-23:00 23:00-00:00],
+      confirm_all_day: false,
+      times_confirmed_expected: %w[18:00-19:00 19:00-20:00 20:00-21:00 21:00-22:00 22:00-23:00 23:00-00:00]
+    }
+    set_data["#{days_week[:sunday]}"] = {}
+    set_data["#{days_week[:sunday]}"]["#{employee_barbara.id.to_s}"] = { all_day: true, times: [], confirm_all_day: true }
+    set_data
+  end
 
-      it "renders a JSON response with the schedule" do
-        schedule = Schedule.create! valid_attributes
-        patch schedule_url(schedule),
-              params: { schedule: new_attributes }, headers: valid_headers, as: :json
-        expect(response).to have_http_status(:ok)
-        expect(response.content_type).to match(a_string_including("application/json"))
-      end
+  describe "POST /update" do
+    it "With invalid parameters" do
+      service_contract = FactoryBot.create(:service_contract, :complete_exercise)
+      start_date = Date.current.next_week.beginning_of_week
+      end_date = Date.current.next_week.end_of_week
+      schedules_wrong_structure_data = [{"date": "2022-03-21 00:00:00", "times": ["start": "19:00", "end": "20:00"]}]
+
+      put v1_schedules_url,
+           params: { service_contract_id: service_contract.id, start_date: start_date, end_date: end_date, schedules: schedules_wrong_structure_data }, headers: valid_headers, as: :json
+      expect(response).to have_http_status(:unprocessable_entity)
     end
 
-    context "with invalid parameters" do
-      it "renders a JSON response with errors for the schedule" do
-        schedule = Schedule.create! valid_attributes
-        patch schedule_url(schedule),
-              params: { schedule: invalid_attributes }, headers: valid_headers, as: :json
-        expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.content_type).to match(a_string_including("application/json"))
+    it "With valid parameters" do
+      service_contract = FactoryBot.create(:service_contract, :complete_exercise)
+      start_date = Date.current.next_week.beginning_of_week
+      end_date = Date.current.next_week.end_of_week
+      result = Schedule::GetSchedulesService.new(service_contract, start_date, end_date).perform
+      schedule_array = (result.success?)? result.schedules_array_hash : {}
+
+      put v1_schedules_url,
+          params: { service_contract_id: service_contract.id, start_date: start_date, end_date: end_date, schedules: schedule_array }, headers: valid_headers, as: :json
+
+      expect(response).to have_http_status(200)
+    end
+
+    it "Should return confirmed schedules structure" do
+      service_contract = FactoryBot.create(:service_contract, :complete_exercise)
+      start_date = Date.current.next_week.beginning_of_week
+      end_date = Date.current.next_week.end_of_week
+      result = Schedule::GetSchedulesService.new(service_contract, start_date, end_date).perform
+      schedule_array = (result.success?)? result.schedules_array_hash : {}
+
+      assignment = schedule_assignment
+      schedule_confirmed_expect = JSON.parse(schedule_array.to_json) # copy all structure
+      schedule_array.each_with_index do |schedule_day, schedule_day_index|
+        #schedule_day_expect = { date: schedule_day[:date], times: [] }
+        day_num = Date.parse(schedule_day[:date]).cwday
+        info_day = assignment[day_num.to_s]
+        schedule_day[:times].each_with_index do |schedule_time, schedule_time_index|
+          # schedule_time_expect = { start_time: schedule_time[:], end_time: "", "employees": [] }
+          schedule_time[:employees].each_with_index do |employee, employee_index|
+            employee_times = info_day[employee[:employee_id].to_s] || nil
+            is_confirmed_expect = false
+            unless employee_times.nil?
+              if employee_times[:all_day]
+                employee[:checked] = true
+                is_confirmed_expect = true if employee_times[:confirm_all_day]
+              else
+                time_range = "#{schedule_time[:start_time]}-#{schedule_time[:end_time]}"
+                employee[:checked] = true if employee_times[:times].include?(time_range)
+                is_confirmed_expect = true if employee_times[:times_confirmed_expected].include?(time_range)
+              end
+              schedule_confirmed_expect[schedule_day_index]["times"][schedule_time_index]["employees"][employee_index]["checked"] = employee[:checked]
+            end
+            schedule_confirmed_expect[schedule_day_index]["times"][schedule_time_index]["employees"][employee_index]["is_confirmed"] = is_confirmed_expect
+          end
+        end
+        # schedule_confirmed_expect << schedule_day_expect
       end
+
+      put v1_schedules_url,
+          params: { service_contract_id: service_contract.id, start_date: start_date, end_date: end_date, schedules: schedule_array }, headers: valid_headers, as: :json
+
+      response_json = JSON.parse(response.body)
+      expect(response).to have_http_status(200)
+      expect(JSON.parse(response.body)).to eq(schedule_confirmed_expect)
     end
   end
 
-  describe "DELETE /destroy" do
-    it "destroys the requested schedule" do
-      schedule = Schedule.create! valid_attributes
-      expect {
-        delete schedule_url(schedule), headers: valid_headers, as: :json
-      }.to change(Schedule, :count).by(-1)
+  describe "GET /rank_date" do
+    it "Should return date range allowed" do
+      service_contract = FactoryBot.create(:service_contract, :complete_exercise)
+      start_date = Date.current.next_week.beginning_of_week
+      end_date = Date.current.end_of_week + 5.weeks
+      date_range_expect = {start_date: start_date, end_date: end_date}
+
+      get rank_dates_v1_schedules_url(service_contract_id: service_contract.id, start_date: start_date, end_date: end_date), as: :json
+      expect(response).to have_http_status(200)
+      expect(JSON.parse(response.body)).to eq(JSON.parse(date_range_expect.to_json))
     end
   end
 end

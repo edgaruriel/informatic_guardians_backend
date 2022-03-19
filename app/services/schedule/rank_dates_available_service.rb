@@ -23,7 +23,6 @@ class Schedule::RankDatesAvailableService < Aldous::Service
       end
       Result::Success.new(rank_dates: {start_date: start_date, end_date: end_date})
     rescue Exception => e
-      test = true
       Result::Failure.new
     end
   end

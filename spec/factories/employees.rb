@@ -1,6 +1,6 @@
 FactoryBot.define do
   factory :employee do
-    name { "MyString" }
-    color_tag { "MyString" }
+    name { "Edgar Uriel" }
+    color_tag { "#CB86F8" }
   end
 end
