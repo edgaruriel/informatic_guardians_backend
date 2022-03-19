@@ -57,15 +57,12 @@ schedule_array.each_with_index do |schedule_day, schedule_day_index|
   schedule_day[:times].each_with_index do |schedule_time, schedule_time_index|
     schedule_time[:employees].each_with_index do |employee, employee_index|
       employee_times = info_day[employee[:employee_id].to_s] || nil
-      is_confirmed_expect = false
       unless employee_times.nil?
         if employee_times[:all_day]
           employee[:checked] = true
-          is_confirmed_expect = true if employee_times[:confirm_all_day]
         else
           time_range = "#{schedule_time[:start_time]}-#{schedule_time[:end_time]}"
           employee[:checked] = true if employee_times[:times].include?(time_range)
-          is_confirmed_expect = true if employee_times[:times_confirmed_expected].include?(time_range)
         end
         Schedule.find(employee[:schedule_id]).update(checked: employee[:checked])
       end

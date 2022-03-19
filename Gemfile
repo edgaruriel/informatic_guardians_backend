@@ -41,9 +41,7 @@ group :development, :test do
 
   # for test
   gem 'factory_bot_rails', '~> 6.2'
-  gem 'faker', '~> 2.20'
   gem 'rspec-rails', '~> 5.1', '>= 5.1.1'
-  gem 'shoulda-matchers', '~> 5.1'
   gem 'database_cleaner-active_record', '~> 2.0', '>= 2.0.1'
   gem 'simplecov', '~> 0.21.2'
 end
