@@ -31,7 +31,10 @@ gem 'pg'
 gem 'validates_timeliness', '~> 6.0.0.beta2'
 #add gem for services
 gem 'aldous', '~> 1.1', '>= 1.1.3'
-
+#add gem for variable environment
+gem 'dotenv-rails', '~> 2.1', '>= 2.1.1'
+#add gem for seed configuration
+gem "seedbank"
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]

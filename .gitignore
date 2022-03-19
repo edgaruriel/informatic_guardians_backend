@@ -32,3 +32,4 @@
 .idea
 ./.idea
 /coverage
+.env

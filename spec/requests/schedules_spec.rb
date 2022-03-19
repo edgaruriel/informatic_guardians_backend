@@ -150,11 +150,9 @@ RSpec.describe "/schedules", type: :request do
       assignment = schedule_assignment
       schedule_confirmed_expect = JSON.parse(schedule_array.to_json) # copy all structure
       schedule_array.each_with_index do |schedule_day, schedule_day_index|
-        #schedule_day_expect = { date: schedule_day[:date], times: [] }
         day_num = Date.parse(schedule_day[:date]).cwday
         info_day = assignment[day_num.to_s]
         schedule_day[:times].each_with_index do |schedule_time, schedule_time_index|
-          # schedule_time_expect = { start_time: schedule_time[:], end_time: "", "employees": [] }
           schedule_time[:employees].each_with_index do |employee, employee_index|
             employee_times = info_day[employee[:employee_id].to_s] || nil
             is_confirmed_expect = false
@@ -172,7 +170,6 @@ RSpec.describe "/schedules", type: :request do
             schedule_confirmed_expect[schedule_day_index]["times"][schedule_time_index]["employees"][employee_index]["is_confirmed"] = is_confirmed_expect
           end
         end
-        # schedule_confirmed_expect << schedule_day_expect
       end
 
       put v1_schedules_url,
