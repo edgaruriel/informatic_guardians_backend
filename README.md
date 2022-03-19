@@ -32,7 +32,7 @@ Follow the next deployment instructions in the follow order:
     
      ```
      bundle install
-  2. Database creation (used postgresql)
+  2. Database creation (use database postgresql: 12.9 v)
      1. Copy and paste the file .env.example to .env in the root project
      2. Edit file .env with your access of databases (host, port, username, password, timeout, db dev, db test)
      3. execute the follow instructions:
